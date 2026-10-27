@@ -437,13 +437,8 @@ const stage = {
     if (home) tweenTo(home.target, home.zoom);
     home = null;
   },
-  thumbs: () => ({
-    keyboard: snapshot(['keyboard'], [items.keyboard], 0.62),
-    // tall thin pieces: frame their interesting top, not the whole pole
-    ringlight: snapshot(['ringlight'], items.ringlight.children.filter(o => o.isGroup), 0.8),
-    'cam-stand': snapshot(['cam-stand', 'webcam'], [items.webcam], 2.6),
-    chair: snapshot(['chair'], [items.chair], 0.78),
-  }),
+  // Only the chair has no product photo (it has no link either).
+  thumbs: () => ({ chair: snapshot(['chair'], [items.chair], 0.78) }),
   actions: id => interact.actions(id),
   screenView: slot => world.screens.view(slot),
   run(id, key) {

@@ -49,7 +49,7 @@ export const PRODUCTS = {
     desc: 'سماعة Open-Back سلكية للاستماع والاستوديو، معروفة بصوتها الطبيعي والواضح.',
     opinion: 'أكثر قطعة أستخدمها. الصوت نظيف ومريحة على الراس لساعات. بس لأنها Open-Back، اللي حولك يسمعون اللي تسمعه.',
   },
-  keyboard: {
+  keyboard: { img: 'images/keyboard.jpg',
     name: 'E-YOOSO Z99', cat: 'input', store: 'amazon', asin: 'B0F7H7L6XJ', close: true,
     desc: 'كيبورد ميكانيكي سلكي بـ 99 زر، السويتشات خطية ومشحّمة وقابلة للتبديل، ومن جوا فيه Gasket ورغوة تمتص الصوت.',
     opinion: 'سعره معقول وصوته Creamy ناعم. للبث ممتاز لأنه مو مزعج في المايك.',
@@ -60,13 +60,13 @@ export const PRODUCTS = {
     desc: 'ماوس قيمنق لاسلكي وزنه 56 جرام، حساسه PAW3950، ومعه قاعدة شحن مغناطيسية فيها شاشة.',
     opinion: 'خفيف مرّة. القاعدة تبيّن لك البطارية، تحطه عليها وانت قايم وخلاص.',
   },
-  'pad-xl': { img: 'images/pad.jpg',
+  'pad-xl': { img: 'images/pad-xl.jpg',
     name: 'SteelSeries QcK XL', cat: 'input', store: 'amazon', asin: 'B0DZ1QB918', close: true,
     desc: 'ماوس باد قماش كبير يغطي جزء كبير من المكتب، وتحته مطاط ما يزحلق.',
     opinion: 'قماش عادي بس يسوي الشغل. حاطه تحت كقاعدة على طول المكتب.',
     compare: [['الموديل', 'QcK XL (النسخة الكلاسيك)', 'QcK XL Performance Balance'], ['المقاس', '900 × 400 مم', '900 × 400 مم'], ['السطح', 'قماش QcK العادي', 'قماش أكثف بحواف مخيطة']],
   },
-  'pad-l': { img: 'images/pad.jpg',
+  'pad-l': { img: 'images/pad-l.jpg',
     name: 'SteelSeries QcK+ (L)', cat: 'input', store: 'amazon', asin: 'B004DCLJ6A',
     desc: 'ماوس باد قماش بمقاس 450 × 400 مم.',
     opinion: 'حاطه فوق الكبير عشان منطقة الماوس تكون أنعم. قديم بس للحين شغال.',
@@ -99,7 +99,7 @@ export const PRODUCTS = {
     compare: [['الماركة', 'AOLION', 'Ukor'], ['عدد البطاريات', '2', '2'], ['السعة', '2650mAh لكل وحدة', '6200mWh لكل وحدة'], ['قاعدة شحن', 'فيه', 'فيه']],
     extra: { label: 'نسختي الأصلية في نون', url: 'https://www.noon.com/saudi-ar/Z04EFD59C55EDDF72EFB3Z/p/' },
   },
-  ringlight: {
+  ringlight: { img: 'images/ringlight.jpg',
     name: 'رينج لايت 10" مع ستاند 59"', cat: 'stream', store: 'amazon', asin: 'B088635TJM',
     desc: 'حلقة إضاءة LED مقاسها 10 بوصة على ستاند لين 150 سم، معها حامل جوال، وتقدر تتحكم في قوتها ولونها.',
     opinion: 'رخيصة وتقضي الغرض للكام. فيها ثلاث درجات ألوان وتتحكم في القوة.',
@@ -109,7 +109,7 @@ export const PRODUCTS = {
     desc: 'كاميرا ويب 4K بحساس كبير، تصلّح الإضاءة تلقائيًا، وفيها مايك وغطاء للعدسة.',
     opinion: 'الصورة واضحة حتى لو الإضاءة مو مرّة، والغطاء حلو لما تقفل.',
   },
-  'cam-stand': {
+  'cam-stand': { img: 'images/cam-stand.jpg',
     name: 'jusmo Desk Mount', cat: 'stream', store: 'amazon', asin: 'B08RYS8YZR',
     desc: 'عمود ألمنيوم يتثبت على المكتب بمشبك، تقدر تطوّله وتقصّره، وفي راسه رأس يلف 360°.',
     opinion: 'ترفع الكام للارتفاع اللي تبغاه، وما ياخذ مكان على المكتب.',
@@ -127,7 +127,7 @@ export const PRODUCTS = {
   },
 
   // inside the case
-  cpu: {
+  cpu: { img: 'images/cpu.jpg',
     name: 'Intel Core i7-12700F', cat: 'pc', part: 'المعالج', store: 'amazon', asin: 'B09WW3DY8S',
     desc: 'معالج إنتل الجيل 12، فيه 12 نواة (8 أداء + 4 كفاءة)، بدون كرت شاشة مدمج.',
     opinion: 'يشغّل اللعبة والبث مع بعض بدون ما يتعب.',
@@ -148,7 +148,7 @@ export const PRODUCTS = {
     desc: 'رامات 64GB (قطعتين × 32GB) من نوع DDR5 بسرعة 6000MT/s، وتدعم XMP.',
     opinion: '64GB كثيرة شوي، بس مفيدة لما تفتح البث والمتصفح واللعبة مع بعض.',
   },
-  ssd: {
+  ssd: { img: 'images/ssd.jpg',
     name: 'Kingston FURY Renegade 2TB', cat: 'pc', part: 'التخزين الأساسي', store: 'amazon', asin: 'B0BJL7MMNF', close: true,
     desc: 'هارد NVMe M.2 من الجيل الرابع (PCIe 4.0)، سرعته لين 7300MB/s.',
     opinion: 'الويندوز والألعاب تفتح بسرعة.',
