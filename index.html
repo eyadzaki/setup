@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EYAD ZAKI — كل اللي على مكتبي</title>
+  <meta name="description" content="السيت أب اللي أبث منه كل يوم. لف المشهد واضغط على أي قطعة تشوف وش هي ومن وين تجيبها.">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="canonical" href="https://eyadzaki.github.io/setup/">
+  <!-- Share preview (absolute URLs so every app picks them up) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://eyadzaki.github.io/setup/">
+  <meta property="og:title" content="EYAD ZAKI — كل اللي على مكتبي">
+  <meta property="og:description" content="لف المكتب ثلاثي الأبعاد واكتشف كل قطعة في السيت أب، مع رأيي ورابطها.">
+  <meta property="og:image" content="https://eyadzaki.github.io/setup/assets/og.jpg">
+  <meta property="og:image:width" content="800">
+  <meta property="og:image:height" content="420">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" href="assets/ez-64.png">
+  <link rel="apple-touch-icon" href="assets/ez-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="loader" class="loader" role="status" aria-label="جاري تحميل المكتب">
+    <div class="flame" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <p>نجهّز المكتب…</p>
+    <s><b id="loader-bar"></b></s>
+  </div>
+  <script>document.getElementById('loader-bar').style.width = '20%';</script>
+
+  <a id="live-banner" class="live-banner" href="https://kick.com/eyadzaki" target="_blank" rel="noopener" hidden>
+    <i aria-hidden="true"></i><b>إياد مباشر الحين</b><span id="live-title"></span><em>ادخل ←</em>
+  </a>
+
+  <header class="topbar">
+    <div class="topbar-start">
+      <a class="brand" href="#" aria-label="EYAD ZAKI">
+        <img src="assets/ez-sparks-256.png" alt="" width="34" height="40">
+        <span>EYAD ZAKI</span>
+      </a>
+      <div class="tools">
+        <a id="live-badge" class="live-badge" href="https://kick.com/eyadzaki" target="_blank" rel="noopener" hidden>
+          <i aria-hidden="true"></i>مباشر<em> الحين</em>
+        </a>
+        <button id="mute-btn" class="search-btn" type="button" aria-pressed="false" aria-label="كتم الأصوات">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="on" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="off" d="m16 9 6 6m0-6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="search-btn" type="button" data-search aria-label="دوّر على قطعة">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <kbd>⌘K</kbd>
+        </button>
+        <button id="counter" class="counter" type="button">
+          <span><em>اكتشفت </em><b>0</b> من 27</span><s><i></i></s>
+        </button>
+      </div>
+    </div>
+    <div class="modes" role="group" aria-label="وضع المكتب">
+      <button data-mode="work" aria-pressed="false"><span aria-hidden="true">💼</span> شغل</button>
+      <button data-mode="stream" aria-pressed="true"><span aria-hidden="true">🔴</span> بث</button>
+      <button data-mode="game" aria-pressed="false"><span aria-hidden="true">🎮</span> قيمنق</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage" aria-label="المكتب ثلاثي الأبعاد">
+      <canvas id="scene"></canvas>
+      <div id="hotspots" class="hotspots"></div>
+      <div class="hero">
+        <p class="eyebrow">SETUP · 3D</p>
+        <h1>كل اللي على مكتبي</h1>
+        <p class="lede">السيت أب اللي أبث منه كل يوم. لف المشهد واضغط على أي قطعة تشوف وش هي ومن وين تجيبها.</p>
+        <div class="hero-actions">
+          <button id="start-tour" class="btn primary" type="button">▶ ابدأ الجولة</button>
+          <a class="btn ghost" href="#parts" data-scroll>تصفّح القطع</a>
+          <button id="seat-btn" class="btn ghost" type="button">🪑 اقعد<em> على الكرسي</em></button>
+        </div>
+      </div>
+      <button id="stand-btn" class="btn ghost stand" type="button">↩ قوم من الكرسي</button>
+      <div id="fade" class="fade" aria-hidden="true"></div>
+      <div class="og-title" aria-hidden="true">
+        <img src="assets/ez-sparks-256.png" alt="">
+        <p>EYAD ZAKI</p>
+        <h2>كل اللي على مكتبي</h2>
+        <span>لف المكتب واكتشف كل قطعة 💜</span>
+      </div>
+      <div id="hover-label" class="hover-label" hidden></div>
+      <div id="tour-ask" class="tour-ask" role="dialog" aria-labelledby="tour-ask-title" hidden>
+        <p id="tour-ask-title"><b>أول مرة هنا؟</b> خذ جولة سريعة على السيت أب، تاخذ دقيقة.</p>
+        <div>
+          <button id="tour-yes" class="btn primary" type="button">▶ يلا نبدأ</button>
+          <button id="tour-no" class="btn ghost" type="button">بشوف بنفسي</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="parts" class="parts" aria-labelledby="parts-title">
+      <header class="parts-head">
+        <p class="eyebrow">ALL PARTS</p>
+        <h2 id="parts-title">كل القطع</h2>
+        <p>كل قطعة مع رأيي فيها ورابطها. اضغط "شوفها في المكتب" وتروح لها في المشهد.</p>
+      </header>
+
+      <aside class="how-support" aria-labelledby="how-title">
+        <div class="hs-head">
+          <span class="hs-heart" aria-hidden="true">💜</span>
+          <div>
+            <h3 id="how-title">تبغى تدعمني؟ اشترِ من نفس الروابط</h3>
+            <p>ما تدفع ولا ريال زيادة. أمازون يعطيني نسبة صغيرة من عنده، وانت تاخذ المنتج بنفس سعره.</p>
+          </div>
+        </div>
+        <ol>
+          <li><b>1</b>اختر القطعة اللي تبغاها</li>
+          <li><b>2</b>اضغط "شوف المنتج"</li>
+          <li><b>3</b>اشترِ من نفس الصفحة، وأي شي تضيفه للسلة خلال 24 ساعة يدعمني بعد</li>
+        </ol>
+      </aside>
+
+      <div id="part-filters" class="filters" role="group" aria-label="فلتر حسب التصنيف"></div>
+      <div id="parts-list"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="about">
+      <img src="assets/ez-sparks-256.png" alt="شعار EZ" width="72" height="72" loading="lazy">
+      <div>
+        <h2>إياد زكي</h2>
+        <p>أبث على Kick وأنزل مقاطع على يوتيوب. هذا المكتب اللي أقضي عليه أغلب يومي، وكل اللي فيه جرّبته بنفسي.</p>
+      </div>
+    </div>
+    <nav class="socials" aria-label="حساباتي">
+      <a href="https://kick.com/eyadzaki" target="_blank" rel="noopener" class="kick">Kick</a>
+      <a href="https://www.youtube.com/@Eyadzaki" target="_blank" rel="noopener">YouTube</a>
+      <a href="https://www.youtube.com/@brobrayal" target="_blank" rel="noopener">قناة التختيم</a>
+      <a href="https://www.tiktok.com/@eyadzaki621" target="_blank" rel="noopener">TikTok</a>
+      <a href="https://www.instagram.com/eyadzaki621/" target="_blank" rel="noopener">Instagram</a>
+    </nav>
+    <a class="btn primary support-btn" href="https://creators.sa/eyadzaki621" target="_blank" rel="noopener">💜 ادعمني مباشرة</a>
+    <p class="disclose-foot">بعض الروابط في هذه الصفحة روابط تسويق بالعمولة من أمازون، وقد أحصل على عمولة من المشتريات المؤهلة.</p>
+    <p class="copy-foot">© EYAD ZAKI</p>
+  </footer>
+
+  <aside id="card" class="card" role="dialog" aria-labelledby="card-title" hidden>
+    <button id="card-grab" class="grab" type="button" aria-label="سكّر البطاقة"><span></span></button>
+    <div id="tour" class="tour" hidden>
+      <s><i></i></s>
+      <div class="tour-row">
+        <span>جولة على السيت أب</span>
+        <button id="tour-pause" type="button">⏸ إيقاف مؤقت</button>
+        <button id="tour-stop" type="button">إنهاء</button>
+      </div>
+    </div>
+    <div class="card-head">
+      <button id="card-prev" class="icon" type="button" aria-label="القطعة اللي قبلها">→</button>
+      <button id="card-next" class="icon" type="button" aria-label="القطعة اللي بعدها">←</button>
+      <button id="card-close" class="icon" type="button" aria-label="سكّر">✕</button>
+    </div>
+    <div id="card-body" class="card-body"></div>
+  </aside>
+
+  <dialog id="search" class="search" aria-label="دوّر على قطعة">
+    <div class="search-box">
+      <input id="search-input" type="search" placeholder="دوّر على قطعة… مثلًا: مايك" autocomplete="off"
+             role="combobox" aria-controls="search-list" aria-expanded="true">
+      <kbd>Esc</kbd>
+    </div>
+    <ul id="search-list" role="listbox"></ul>
+  </dialog>
+
+  <dialog id="achievement" class="achievement" aria-labelledby="ach-title">
+    <img class="ach-face" src="assets/ez-sparks-256.png" alt="" width="84" height="84" loading="lazy">
+    <p class="trophy" aria-hidden="true">🏆</p>
+    <h2 id="ach-title">كفو! اكتشفت السيت أب كامل</h2>
+    <p>شكرًا إنك لفّيت على كل القطع. إذا عجبك المحتوى تابعني، وجودك في البث يفرق معاي 💜</p>
+    <div class="ach-actions">
+      <a class="btn primary" href="https://kick.com/eyadzaki" target="_blank" rel="noopener">تابعني في Kick</a>
+      <a class="btn ghost" href="https://creators.sa/eyadzaki621" target="_blank" rel="noopener">💜 ادعمني مباشرة</a>
+      <a class="btn ghost" href="https://www.youtube.com/@Eyadzaki" target="_blank" rel="noopener">اشترك في يوتيوب</a>
+      <a class="btn ghost" href="https://www.youtube.com/@brobrayal" target="_blank" rel="noopener">قناة التختيم</a>
+    </div>
+    <button class="link" type="button" data-close>رجوع للمكتب</button>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
