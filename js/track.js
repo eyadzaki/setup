@@ -1,7 +1,7 @@
 // Private site stats with Umami (umami.is). Only Eyad sees the dashboard.
 // Paste the Website ID from Umami below; until then nothing is sent.
 // Tracks only on the live site, so local testing never pollutes the numbers.
-export const UMAMI_ID = '';
+export const UMAMI_ID = 'ac4b635e-db6c-4234-a6d1-6f855b9040c1';
 const LIVE_HOST = 'eyadzaki.github.io';
 
 if (UMAMI_ID && location.hostname === LIVE_HOST) {

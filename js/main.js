@@ -39,7 +39,6 @@ const live = createLive({
 const seat = createSeat(canvas);
 const interact = createInteractions({ world, getMode: () => mode });
 const life = createLife({ world });
-const streamerOn = () => life.setStreamer(mode === 'stream' && !seat.on); // only on stream, never in your own seat
 const activeCamera = () => (seat.on ? seat.camera : camera);
 // The Kick player shows whenever the center monitor is on the Kick page.
 const syncLive = () => live.setMode(world.screens.view('center') === 'kick' ? 'stream' : '');
@@ -263,7 +262,6 @@ const modeButtons = document.querySelectorAll('[data-mode]');
 function setMode(name) {
   mode = name;
   applyMode(world, name);
-  streamerOn();
   syncLive();
   document.documentElement.dataset.mode = name;
   modeButtons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === name)));
@@ -331,7 +329,6 @@ const DECOR_TEXT = {
   water: 'مو معقولة! بتشوف مويتي كمان؟ 😂',
   bonbon: 'بون بون 🧡',
   abufarwa: 'أبو فروة 🖤',
-  streamer: 'قاعد يلعب الحين، لا تزعجه 🎮',
 };
 world.decor.water.traverse(o => { if (o.isMesh) pickables.push(o); });
 pickables.push(...life.pickables());
@@ -564,7 +561,6 @@ function switchView(sit) {
     controls.enabled = !sit;
     canvas.style.touchAction = sit ? 'none' : 'pan-y'; // in the chair one finger looks around
     document.body.classList.toggle('seated', sit);
-    streamerOn();
     label.hidden = true;
     dirty = true;
     fade.classList.remove('on');
