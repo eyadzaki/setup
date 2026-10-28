@@ -10,12 +10,15 @@ const PURPLE = '#c04bff';
 const KICK = '#53fc18';
 const W = 512, H = 288, TB = 16; // canvas size and taskbar height
 
+// Real names from Eyad's Kick chat this week; the lines are short, neutral
+// reactions so nobody is quoted saying something they didn't.
 const CHAT = [
-  ['zrar112', 'يا هلا إياد 👋'], ['ابو_فهد', 'السيت أب نار 🔥'], ['nawaf', 'وش السماعة؟'],
-  ['dark5souls', 'GG'], ['ريم', 'مساء الخير للجميع'], ['saud.x', 'كمّل كمّل'],
-  ['m7md', 'ههههههه'], ['lama', 'الإضاءة حلوة اليوم'], ['bandar', 'اللعبة هذي وش اسمها؟'],
-  ['ziyad', 'تابعت 💜'], ['faisal', 'لا تنام بدري'], ['noura', 'رابط الماوس؟'],
+  ['ROCK41A', 'يا هلا 👋'], ['ZRAR112', 'GG'], ['Yu0Gi', '😂😂'],
+  ['iM_7m9', 'كمّل كمّل'], ['0gagoshxx', 'امين'], ['abood21323', '🔥🔥'],
+  ['Aboodbabawy', 'ههههههه'], ['DARK5S0ULS', 'GG 💜'], ['ROCK41A', 'ايوه'],
+  ['ZRAR112', 'يلا يلا'], ['Yu0Gi', '👀'], ['iM_7m9', 'سلام'],
 ];
+let STREAM = null; // data/stream.json: game + title of the stream the frame comes from
 
 const IMG = {};
 let FEED = null;            // data/videos.json, refreshed every 6h by a GitHub Action
@@ -23,11 +26,16 @@ const THUMBS = {};          // video id -> loaded thumbnail
 const ytCache = {};         // channel -> pre-drawn page (cursor goes on top)
 function loadImages(onLoad) {
   const done = () => { for (const k in ytCache) delete ytCache[k]; onLoad(); };
-  for (const name of ['yt-ez', 'yt-bro', 'kick-stream', 'game']) {
+  const load = (name, v = '') => {
     const im = new Image();
     im.onload = () => { IMG[name] = im; done(); };
-    im.src = `assets/screens/${name}.jpg`;
-  }
+    im.src = `assets/screens/${name}.jpg${v}`;
+  };
+  for (const name of ['yt-ez', 'yt-bro', 'game']) load(name);
+  // The Kick frame is refreshed by the GitHub Action after each stream.
+  fetch('data/stream.json', { cache: 'no-cache' }).then(r => r.json())
+    .then(s => { STREAM = s; load('kick-stream', '?v=' + encodeURIComponent(s.updated)); })
+    .catch(() => load('kick-stream'));
   const logo = new Image();
   logo.onload = () => { IMG.ez = logo; done(); };
   logo.src = 'assets/ez-64.png';
@@ -299,7 +307,10 @@ const DRAW = {
     ctx.fillStyle = '#121216'; ctx.fillRect(cx, 22, W - cx, vh);
     chatLines(ctx, cx + 4, 26, W - cx - 8, vh - 8, t, 10);
     ctx.fillStyle = '#18181d'; ctx.fillRect(0, H - TB - 30, W, 30);
-    text(ctx, 'eyadzaki · بث طويل من البروبريل', W - 12, H - TB - 15, 12, '#fff', 700);
+    ctx.save(); ctx.beginPath(); ctx.rect(70, H - TB - 30, W - 80, 30); ctx.clip();
+    text(ctx, `eyadzaki · ${STREAM?.title || 'بث طويل من البروبريل'}`, W - 12, H - TB - 20, 11, '#fff', 700);
+    if (STREAM?.game) text(ctx, STREAM.game, W - 12, H - TB - 8, 9, KICK, 600);
+    ctx.restore();
     rr(ctx, 10, H - TB - 24, 54, 18, 4, KICK);
     ctx.fillStyle = '#0b0b0e'; ctx.font = `800 10px ${FONT}`; ctx.textAlign = 'center'; ctx.direction = 'ltr';
     ctx.fillText('Follow', 37, H - TB - 15);

@@ -5,6 +5,7 @@ import {
   CLOSE_NOTE, SUPPORT_LINE, productLink,
 } from './data.js';
 import { play, sound } from './interact.js';
+import { track } from './track.js';
 
 const CAT_ICON = { monitors: '🖥️', pc: '💻', audio: '🎧', stream: '🎥', input: '⌨️', furniture: '🪑' };
 const shortOpinion = s => s.split(/(?<=[.؟!])\s/)[0];
@@ -36,11 +37,11 @@ function compareTable(p) {
     </table></div>`;
 }
 
-function buyBlock(p) {
+function buyBlock(p, key) {
   const l = productLink(p);
   if (!l) return '';
   const rel = l.sponsored ? 'sponsored noopener' : 'noopener';
-  return `<a class="btn primary" href="${l.url}" target="_blank" rel="${rel}">${l.label}<span aria-hidden="true">↗</span></a>
+  return `<a class="btn primary" href="${l.url}" target="_blank" rel="${rel}" data-track="buy" data-item="${key}" data-store="${p.store}" data-where="card">${l.label}<span aria-hidden="true">↗</span></a>
     ${l.sponsored ? `<div class="support-box"><b>💜 اشترِ من هذا الرابط وادعمني</b><span>${SUPPORT_LINE}</span></div>` : ''}
     ${p.extra ? `<a class="btn ghost" href="${p.extra.url}" target="_blank" rel="noopener">${esc(p.extra.label)}<span aria-hidden="true">↗</span></a>` : ''}`;
 }
@@ -56,7 +57,7 @@ function insideList(found) {
           <p>${esc(p.desc)}</p>
           <blockquote><b>رأيي</b>${esc(p.opinion)}</blockquote>
           ${compareTable(p)}
-          <div class="actions">${buyBlock(p)}</div>
+          <div class="actions">${buyBlock(p, k)}</div>
         </div>
       </details></li>`;
     }).join('')}</ul>`;
@@ -87,6 +88,35 @@ export function initUI(stage) {
     if (found.size === 1) toast(`🔍 اكتشفت أول قطعة! باقي ${TOTAL - 1}`);
     if (found.size === TOTAL) setTimeout(showAchievement, 700);
   }
+
+  /* ---------- share ---------- */
+  // Phones get their own share sheet (WhatsApp, Snapchat, Instagram...);
+  // desktops get a small menu. Every share is counted in the stats.
+  const SITE = 'https://eyadzaki.github.io/setup/';
+  const shareDlg = $('#share');
+  const canNativeShare = !!navigator.share && matchMedia('(pointer: coarse)').matches;
+  async function share(hash, text, where) {
+    const url = SITE + (hash ? '#' + hash : '');
+    track('share-open', { where });
+    if (canNativeShare) {
+      try { await navigator.share({ title: 'EYAD ZAKI — كل اللي على مكتبي', text, url }); track('share', { via: 'system', where }); }
+      catch { /* closed the sheet */ }
+      return;
+    }
+    const msg = `${text} ${url}`;
+    $('#share-wa').href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+    $('#share-x').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
+    $('#share-url').value = url;
+    shareDlg.querySelectorAll('[data-track]').forEach(a => { a.dataset.where = where; });
+    shareDlg.showModal();
+  }
+  $('#share-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('#share-url').value); toast('✓ انسخ الرابط'); } catch { $('#share-url').select(); }
+    shareDlg.close();
+  });
+  shareDlg.addEventListener('click', e => { if (e.target === shareDlg || e.target.closest('[data-close]')) shareDlg.close(); });
+  document.querySelectorAll('[data-share-site]').forEach(b => b.addEventListener('click', () =>
+    share('', 'شوف السيت أب حق إياد زكي ثلاثي الأبعاد، كل قطعة مع رأيه ورابطها 🎮', b.dataset.shareSite)));
 
   /* ---------- toast ---------- */
   const toastEl = $('#toast');
@@ -126,13 +156,13 @@ export function initUI(stage) {
       ${compareTable(p)}
       ${tryBlock(id)}
       <div class="actions">
-        ${buyBlock(p)}
+        ${buyBlock(p, s.product)}
         ${ch ? (ch === CHANNELS.kick && stage.isLive
-          ? `<a class="btn live-btn" href="${ch.url}" target="_blank" rel="noopener"><i aria-hidden="true"></i>مباشر الحين · شوف البث<span aria-hidden="true">↗</span></a>`
-          : `<a class="btn ghost" href="${ch.url}" target="_blank" rel="noopener">شوف القناة · ${esc(ch.label)}<span aria-hidden="true">↗</span></a>`) : ''}
+          ? `<a class="btn live-btn" href="${ch.url}" target="_blank" rel="noopener" data-track="channel" data-via="kick-live"><i aria-hidden="true"></i>مباشر الحين · شوف البث<span aria-hidden="true">↗</span></a>`
+          : `<a class="btn ghost" href="${ch.url}" target="_blank" rel="noopener" data-track="channel" data-via="${esc(ch.label)}">شوف القناة · ${esc(ch.label)}<span aria-hidden="true">↗</span></a>`) : ''}
       </div>
       ${id === 'case' ? insideList(found) : ''}
-      <button class="copy" type="button" data-copy>🔗 انسخ رابط القطعة</button>
+      <div class="share-row"><button class="copy" type="button" data-share-item>📤 شارك القطعة</button><button class="copy" type="button" data-copy>🔗 انسخ الرابط</button></div>
       ${p.store === 'amazon' || id === 'case' ? '<p class="disclose">بعض الروابط روابط تسويق بالعمولة من أمازون، وقد أحصل على عمولة من المشتريات المؤهلة.</p>' : ''}`;
     body.scrollTop = 0;
     if (id === 'case') {
@@ -178,6 +208,7 @@ export function initUI(stage) {
     });
     stage.select(id);
     play('tick');
+    if (!opts.fromTour) track('open', { item: opts.inner || id });
     discover(SCENE_BY_ID[id].product);
     history.replaceState(null, '', '#' + (opts.inner || id));
     if (!opts.fromTour && !opts.silentFocus) $('#card-close').focus({ preventScroll: true });
@@ -218,10 +249,17 @@ export function initUI(stage) {
         body.scrollTop = top;
         body.querySelector(`[data-act="${key}"]`)?.focus({ preventScroll: true });
       }
+      track('try', { item: id, via: key });
+      return;
+    }
+    const hash = location.hash.slice(1) || current;
+    if (e.target.closest('[data-share-item]')) {
+      share(hash, `شوف ${PRODUCTS[SCENE_BY_ID[current].product].name} في سيت أب إياد زكي 👀`, 'item:' + hash);
       return;
     }
     if (!e.target.closest('[data-copy]')) return;
-    const url = location.href.split('#')[0] + '#' + (location.hash.slice(1) || current);
+    const url = SITE + '#' + hash;
+    track('copy-link', { item: hash });
     try { await navigator.clipboard.writeText(url); toast('✓ انسخ الرابط'); }
     catch { toast(url); }
   });
@@ -266,6 +304,7 @@ export function initUI(stage) {
     }, TOUR_MS);
   }
   function startTour() {
+    track('tour');
     tour = { paused: false, timer: 0 };
     tourBar.hidden = false;
     document.body.classList.add('touring');
@@ -326,6 +365,7 @@ export function initUI(stage) {
     input.setAttribute('aria-activedescendant', shown.length ? `opt-${active}` : '');
   }
   function openSearch() {
+    track('search');
     stopTour();
     input.value = '';
     active = 0;
@@ -364,7 +404,7 @@ export function initUI(stage) {
 
   /* ---------- achievement ---------- */
   const ach = $('#achievement');
-  function showAchievement() { stopTour(); ach.showModal(); }
+  function showAchievement() { stopTour(); ach.showModal(); track('achievement'); }
   ach.addEventListener('click', e => { if (e.target === ach || e.target.closest('[data-close]')) ach.close(); });
 
   /* ---------- deep links ---------- */
@@ -427,7 +467,7 @@ export function initUI(stage) {
       <p class="quote">${esc(shortOpinion(p.opinion))}</p>
       ${l?.sponsored ? '<p class="mini-support">💜 الشراء من الزر يدعمني، وسعرك نفسه</p>' : ''}
       <div class="row">
-        ${l ? `<a class="btn primary" href="${l.url}" target="_blank" rel="${l.sponsored ? 'sponsored noopener' : 'noopener'}">${l.label}</a>` : ''}
+        ${l ? `<a class="btn primary" href="${l.url}" target="_blank" rel="${l.sponsored ? "sponsored noopener" : "noopener"}" data-track="buy" data-item="${key}" data-store="${p.store}" data-where="grid">${l.label}</a>` : ''}
         <button class="btn ghost" type="button" data-goto="${sceneId}" ${inner ? `data-inner="${inner}"` : ''}>شوفها في المكتب</button>
       </div>
     </article>`;
@@ -483,6 +523,7 @@ export function initUI(stage) {
   return {
     open,
     close,
+    say: toast,
     onModeChange() { if (current) render(current); },
     onSeatChange(sat) {
       if (sat) { if (current) close(); toast('اسحب عشان تلف راسك، والعجلة تقرّب 👀'); }

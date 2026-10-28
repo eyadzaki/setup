@@ -39,7 +39,7 @@
   </div>
   <script>document.getElementById('loader-bar').style.width = '20%';</script>
 
-  <a id="live-banner" class="live-banner" href="https://kick.com/eyadzaki" target="_blank" rel="noopener" hidden>
+  <a id="live-banner" class="live-banner" href="https://kick.com/eyadzaki" target="_blank" rel="noopener" data-track="live" data-where="banner" hidden>
     <i aria-hidden="true"></i><b>إياد مباشر الحين</b><span id="live-title"></span><em>ادخل ←</em>
   </a>
 
@@ -50,9 +50,12 @@
         <span>EYAD ZAKI</span>
       </a>
       <div class="tools">
-        <a id="live-badge" class="live-badge" href="https://kick.com/eyadzaki" target="_blank" rel="noopener" hidden>
+        <a id="live-badge" class="live-badge" href="https://kick.com/eyadzaki" target="_blank" rel="noopener" data-track="live" data-where="badge" hidden>
           <i aria-hidden="true"></i>مباشر<em> الحين</em>
         </a>
+        <button class="search-btn icon-only" type="button" data-share-site="topbar" aria-label="شارك الموقع">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="18" cy="5" r="3" fill="currentColor"/><circle cx="6" cy="12" r="3" fill="currentColor"/><circle cx="18" cy="19" r="3" fill="currentColor"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
         <button id="mute-btn" class="search-btn" type="button" aria-pressed="false" aria-label="كتم الأصوات">
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="on" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="off" d="m16 9 6 6m0-6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
@@ -80,6 +83,7 @@
         <p class="eyebrow">SETUP · 3D</p>
         <h1>كل اللي على مكتبي</h1>
         <p class="lede">السيت أب اللي أبث منه كل يوم. لف المشهد واضغط على أي قطعة تشوف وش هي ومن وين تجيبها.</p>
+        <p class="ask-me">💬 عندك أي سؤال؟ حياك الله في <a href="https://kick.com/eyadzaki" target="_blank" rel="noopener">البث</a>، اسألني وأجاوبك.</p>
         <div class="hero-actions">
           <button id="start-tour" class="btn primary" type="button">▶ ابدأ الجولة</button>
           <a class="btn ghost" href="#parts" data-scroll>تصفّح القطع</a>
@@ -87,6 +91,10 @@
         </div>
       </div>
       <button id="stand-btn" class="btn ghost stand" type="button">↩ قوم من الكرسي</button>
+      <div class="zoom-ctl" role="group" aria-label="التقريب">
+        <button id="zoom-in" type="button" aria-label="قرّب">+</button>
+        <button id="zoom-out" type="button" aria-label="بعّد">−</button>
+      </div>
       <div id="fade" class="fade" aria-hidden="true"></div>
       <div class="og-title" aria-hidden="true">
         <img src="assets/ez-sparks-256.png" alt="">
@@ -140,13 +148,14 @@
       </div>
     </div>
     <nav class="socials" aria-label="حساباتي">
-      <a href="https://kick.com/eyadzaki" target="_blank" rel="noopener" class="kick">Kick</a>
-      <a href="https://www.youtube.com/@Eyadzaki" target="_blank" rel="noopener">YouTube</a>
-      <a href="https://www.youtube.com/@brobrayal" target="_blank" rel="noopener">قناة التختيم</a>
-      <a href="https://www.tiktok.com/@eyadzaki621" target="_blank" rel="noopener">TikTok</a>
-      <a href="https://www.instagram.com/eyadzaki621/" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://kick.com/eyadzaki" target="_blank" rel="noopener" class="kick" data-track="social" data-via="kick">Kick</a>
+      <a href="https://www.youtube.com/@Eyadzaki" target="_blank" rel="noopener" data-track="social" data-via="youtube">YouTube</a>
+      <a href="https://www.youtube.com/@brobrayal" target="_blank" rel="noopener" data-track="social" data-via="bro">قناة التختيم</a>
+      <a href="https://www.tiktok.com/@eyadzaki621" target="_blank" rel="noopener" data-track="social" data-via="tiktok">TikTok</a>
+      <a href="https://www.instagram.com/eyadzaki621/" target="_blank" rel="noopener" data-track="social" data-via="instagram">Instagram</a>
     </nav>
-    <a class="btn primary support-btn" href="https://creators.sa/eyadzaki621" target="_blank" rel="noopener">💜 ادعمني مباشرة</a>
+    <p class="ask-me foot">💬 عندك أي سؤال عن السيت أب أو أي قطعة فيه؟ حياك الله في <a href="https://kick.com/eyadzaki" target="_blank" rel="noopener">البث</a>، اسألني وأجاوبك.</p>
+    <div class="foot-actions"><a class="btn primary support-btn" href="https://creators.sa/eyadzaki621" target="_blank" rel="noopener" data-track="support" data-where="footer">💜 ادعمني مباشرة</a><button class="btn ghost" type="button" data-share-site="footer">📤 شارك السيت أب</button></div>
     <p class="disclose-foot">بعض الروابط في هذه الصفحة روابط تسويق بالعمولة من أمازون، وقد أحصل على عمولة من المشتريات المؤهلة.</p>
     <p class="copy-foot">© EYAD ZAKI</p>
   </footer>
@@ -185,11 +194,25 @@
     <p>شكرًا إنك لفّيت على كل القطع. إذا عجبك المحتوى تابعني، وجودك في البث يفرق معاي 💜</p>
     <div class="ach-actions">
       <a class="btn primary" href="https://kick.com/eyadzaki" target="_blank" rel="noopener">تابعني في Kick</a>
-      <a class="btn ghost" href="https://creators.sa/eyadzaki621" target="_blank" rel="noopener">💜 ادعمني مباشرة</a>
+      <a class="btn ghost" href="https://creators.sa/eyadzaki621" target="_blank" rel="noopener" data-track="support" data-where="achievement">💜 ادعمني مباشرة</a>
+      <button class="btn ghost" type="button" data-share-site="achievement">📤 شارك السيت أب مع أخوياك</button>
       <a class="btn ghost" href="https://www.youtube.com/@Eyadzaki" target="_blank" rel="noopener">اشترك في يوتيوب</a>
       <a class="btn ghost" href="https://www.youtube.com/@brobrayal" target="_blank" rel="noopener">قناة التختيم</a>
     </div>
     <button class="link" type="button" data-close>رجوع للمكتب</button>
+  </dialog>
+
+  <dialog id="share" class="share" aria-labelledby="share-title">
+    <h2 id="share-title">شارك السيت أب 📤</h2>
+    <div class="share-opts">
+      <a id="share-wa" class="btn" href="#" target="_blank" rel="noopener" data-track="share" data-via="whatsapp">واتساب</a>
+      <a id="share-x" class="btn" href="#" target="_blank" rel="noopener" data-track="share" data-via="x">X (تويتر)</a>
+    </div>
+    <div class="share-copy">
+      <input id="share-url" type="text" readonly aria-label="رابط المشاركة" dir="ltr">
+      <button id="share-copy" class="btn primary" type="button" data-track="share" data-via="copy">نسخ</button>
+    </div>
+    <button class="link" type="button" data-close>إغلاق</button>
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

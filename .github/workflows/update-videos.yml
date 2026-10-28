@@ -1,4 +1,4 @@
-name: Update YouTube videos
+name: Update YouTube videos and stream frame
 
 on:
   schedule:
@@ -17,10 +17,13 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/update-videos.mjs
+      - name: Latest Kick gameplay frame
+        run: node scripts/update-stream.mjs
+        continue-on-error: true   # Kick may block datacenter IPs; the site keeps the last frame
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
-          git add data/videos.json
-          git diff --cached --quiet || git commit -m "Update latest YouTube videos"
+          git add data/videos.json data/stream.json assets/screens/kick-stream.jpg 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "Update latest videos and stream frame"
           git push

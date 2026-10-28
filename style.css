@@ -133,6 +133,10 @@ kbd {
   text-shadow: 0 2px 30px rgba(0, 0, 0, .6);
 }
 .lede { margin: 12px 0 0; font-size: clamp(14px, 1.4vw, 16px); line-height: 1.7; color: var(--muted); }
+.ask-me { margin: 10px 0 0; font-size: 14px; color: #d9d6e2; line-height: 1.7; pointer-events: auto; }
+.ask-me a { color: #8dff63; font-weight: 700; text-decoration: none; }
+.ask-me a:hover { text-decoration: underline; }
+.ask-me.foot { margin: 0; padding: 12px 14px; border-radius: 12px; background: rgba(83, 252, 24, .06); border: 1px solid rgba(83, 252, 24, .25); }
 .hero-actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 .hero-actions .btn { pointer-events: auto; }
 #seat-btn em { font-style: normal; }
@@ -173,6 +177,20 @@ kbd {
 .seated .hero * { pointer-events: none !important; }
 .seated #scene { cursor: grab; }
 .card-open .stand { opacity: 0; pointer-events: none; }
+
+/* +/− zoom (desktop; phones pinch) */
+.zoom-ctl {
+  position: absolute; z-index: 5; inset-inline-end: 16px; bottom: 20px; display: grid; gap: 6px;
+  transition: opacity .3s;
+}
+.zoom-ctl button {
+  width: 40px; height: 40px; border-radius: 12px; cursor: pointer; font-size: 20px; font-weight: 600; line-height: 1;
+  background: rgba(20, 20, 28, .78); border: 1px solid var(--line-2); color: var(--text);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.zoom-ctl button:hover { border-color: var(--accent); }
+.card-open .zoom-ctl, .seated .zoom-ctl, .asking .zoom-ctl { opacity: 0; pointer-events: none; }
+@media (pointer: coarse) { .zoom-ctl { display: none; } }
 
 /* "try it" buttons inside a card */
 .try { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; align-items: center; }
@@ -338,6 +356,26 @@ blockquote b { display: block; font-size: 12px; color: var(--accent); margin-bot
 .achievement p { color: #d9d6e2; line-height: 1.8; margin: 0; }
 .ach-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
 .link { margin-top: 12px; background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 14px; padding: 8px; }
+
+/* ---------- share ---------- */
+.icon-only { width: 40px; padding: 0; justify-content: center; }
+.share {
+  width: min(380px, calc(100vw - 32px)); padding: 22px; border-radius: 20px; text-align: center;
+  border: 1px solid var(--line-2); background: #13121a; color: var(--text); box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+}
+.share::backdrop { background: rgba(5, 4, 10, .6); backdrop-filter: blur(4px); }
+.share h2 { margin: 0 0 14px; font-size: 20px; }
+.share-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#share-wa { background: #1fa855; color: #fff; }
+#share-x { background: #000; color: #fff; border-color: #333; }
+.share-copy { display: flex; gap: 8px; margin-top: 10px; }
+.share-copy input {
+  flex: 1; min-width: 0; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line-2);
+  background: rgba(255, 255, 255, .04); color: var(--muted); font: 500 13px var(--font);
+}
+.share-row { display: flex; gap: 8px; }
+.share-row .copy { flex: 1; }
+.foot-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* ---------- toast ---------- */
 .toast {
@@ -512,7 +550,11 @@ blockquote b { display: block; font-size: 12px; color: var(--accent); margin-bot
   .topbar-start { justify-content: space-between; }
   .search-btn kbd { display: none; }
   .brand, .live-badge, .counter { white-space: nowrap; flex-shrink: 0; }
-  .tools { gap: 6px; }
+  .tools { gap: 4px; }
+  .search-btn, .icon-only, #mute-btn { width: 36px; height: 36px; }
+  .counter { height: 36px; padding: 0 10px; }
+  .brand span { font-size: 10px; }
+  .brand img { width: 26px; }
   .live-badge { padding: 0 12px; }
   .live-badge em, .counter em { display: none; }
   .live-banner span { display: none; }
@@ -549,7 +591,8 @@ blockquote b { display: block; font-size: 12px; color: var(--accent); margin-bot
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition: none !important; animation: none !important; }
+  /* calm, not frozen: quick fades stay, looping animations stop */
+  *, *::before, *::after { transition-duration: .15s !important; animation: none !important; }
 }
 .no-webgl .stage::after {
   content: 'المتصفح ما يدعم 3D، بس تقدر تتصفح القطع من زر البحث.';

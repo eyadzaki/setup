@@ -43,7 +43,7 @@ const gradient = (() => {
 })();
 
 const matCache = new Map();
-function toon(color, extra) {
+export function toon(color, extra) {
   const key = color + JSON.stringify(extra || {});
   if (!matCache.has(key)) matCache.set(key, new THREE.MeshToonMaterial({ color, gradientMap: gradient, ...extra }));
   return matCache.get(key);
@@ -108,7 +108,7 @@ const shadowTex = canvasTex(128, 128, (x, w, h) => {
   g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(0.6, 'rgba(0,0,0,.25)'); g.addColorStop(1, 'rgba(0,0,0,0)');
   x.fillStyle = g; x.fillRect(0, 0, w, h);
 });
-function blob(parent, w, d, x, y, z, rot = 0, opacity = 1) {
+export function blob(parent, w, d, x, y, z, rot = 0, opacity = 1) {
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d),
     new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, opacity }));
   m.rotation.set(-Math.PI / 2, 0, rot);
@@ -176,12 +176,12 @@ export function buildScene() {
   buildRingLight(item('ringlight', 0.022, 0, 0.022), fx);
   buildWebcam(item('cam-stand', 0.86, RY, 0.07), item('webcam', 0, 0, 0));
   buildChair(item('chair', USER.x, 0, USER.y));
-  buildDecor(root);
+  const decor = buildDecor(root);
 
   // tag every mesh with its item id so raycasts know what was hit
   for (const [id, g] of Object.entries(items)) g.traverse(o => { if (o.isMesh) o.userData.id = id; });
 
-  return { scene, root, items, fx, screens };
+  return { scene, root, items, fx, screens, decor };
 }
 
 function buildRoom(root, fx) {
@@ -531,14 +531,18 @@ function buildPads(xl, l) {
 }
 
 function buildMouse(g) {
-  // Ajazz AJ159 Apex (white) + its charging dock at the back of the big pad.
-  g.rotation.y = 0.25;
+  // Ajazz AJ159 Apex (white): palm end toward the chair, buttons and scroll
+  // wheel (local +Z) pointing away from it, toward the desk.
+  faceToward(g, 2 * g.position.x - USER.x, 2 * g.position.z - USER.y);
   const white = toon('#f4f4f6');
   box(g, 0.062, 0.034, 0.12, white, 0, 0.017, 0, 0.016);
   box(g, 0.003, 0.006, 0.03, toon('#2a2a33'), 0, 0.034, 0.03);
+  box(g, 0.0015, 0.003, 0.05, toon('#cfd0d6'), 0, 0.0345, 0.032);   // split between the buttons
+  // Its charging dock lives on the desk top under the right monitor's riser.
+  g.updateMatrixWorld();
   const dock = new THREE.Group();
-  dock.position.set(-0.33, -0.004, -0.08);
-  dock.rotation.y = 0.5;
+  dock.position.copy(g.worldToLocal(V(1.02, DY, 0.15)));
+  dock.rotation.y = Math.atan2(USER.x - 1.02, USER.y - 0.15) - g.rotation.y;
   g.add(dock);
   box(dock, 0.06, 0.03, 0.075, white, 0, 0.015, 0, 0.012);
   box(dock, 0.036, 0.022, 0.003, basic(0x6aa8ff), 0, 0.02, 0.038);
@@ -692,6 +696,8 @@ function buildDecor(root) {
   cyl(b, 0.0332, 0.0332, 0.012, toon('#f4f8fc'), 0, 0.095, 0, 18);       // white stripe on the label
   cyl(b, 0.014, 0.0325, 0.03, plastic, 0, 0.175, 0, 18);                  // shoulder
   cyl(b, 0.0145, 0.0145, 0.02, toon('#1e78d6'), 0, 0.2, 0, 14);           // cap
+  b.traverse(o => { if (o.isMesh) o.userData.decor = 'water'; });         // hover joke, not a product
+  return { water: b };
 }
 
 /* ---------- modes ---------- */

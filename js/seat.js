@@ -90,10 +90,10 @@ export function createSeat(canvas) {
       on = true;
       yaw = 0; pitch = -0.05; fov = FOV + 8;
       goal = null; saved = null;
-      entering = reduceMotion ? null : { t0: performance.now(), ms: 1500 };
+      entering = { t0: performance.now(), ms: reduceMotion ? 700 : 1500 };
       camera.position.copy(EYE);
       if (entering) camera.position.add(new THREE.Vector3(0.28, 0.16, 0.28));
-      easeTo(0, 0, FOV, reduceMotion ? 1 : 1500);
+      easeTo(0, 0, FOV, reduceMotion ? 700 : 1500);
       apply();
     },
     exit() { on = false; drag = null; pinch.clear(); },

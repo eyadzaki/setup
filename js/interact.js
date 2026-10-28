@@ -34,6 +34,7 @@ const SFX = {
   type: () => { let at = 0; for (let i = 0; i < 9; i++) { click(at); at += 0.06 + Math.random() * 0.07; } },
   mouse: () => { click(0, 0.05); click(0.09, 0.04); },
   rumble: () => { tone(58, 0.4, { type: 'square', gain: 0.025 }); tone(62, 0.4, { type: 'square', gain: 0.02, at: 0.05 }); },
+  meow: () => { tone(520, 0.12, { type: 'triangle', gain: 0.05, to: 880 }); tone(880, 0.22, { type: 'triangle', gain: 0.045, at: 0.11, to: 430 }); },
   on: () => { tone(620, 0.07, { gain: 0.035 }); tone(930, 0.09, { gain: 0.035, at: 0.07 }); },
   off: () => { tone(930, 0.07, { gain: 0.035 }); tone(620, 0.09, { gain: 0.035, at: 0.07 }); },
 };

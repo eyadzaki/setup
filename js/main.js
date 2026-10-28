@@ -6,12 +6,17 @@ import { initUI } from './ui.js';
 import { createLive } from './live.js';
 import { createSeat } from './seat.js';
 import { createInteractions, play } from './interact.js';
+import { track } from './track.js';
+import { createLife } from './life.js';
 
 const canvas = document.getElementById('scene');
 const loaderBar = document.getElementById('loader-bar');
 loaderBar.style.width = '60%'; // three.js is in
 const coarse = matchMedia('(pointer: coarse)').matches;
 const lowEnd = (navigator.hardwareConcurrency || 4) <= 4 || (navigator.deviceMemory || 8) <= 4;
+// "Reduce motion" (Windows: animation effects off) keeps the motion calm instead of
+// removing it: no parallax, shorter camera moves without the swing; the cats and
+// the small UI easing stay.
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let renderer;
@@ -33,6 +38,8 @@ const live = createLive({
 });
 const seat = createSeat(canvas);
 const interact = createInteractions({ world, getMode: () => mode });
+const life = createLife({ world });
+const streamerOn = () => life.setStreamer(mode === 'stream' && !seat.on); // only on stream, never in your own seat
 const activeCamera = () => (seat.on ? seat.camera : camera);
 // The Kick player shows whenever the center monitor is on the Kick page.
 const syncLive = () => live.setMode(world.screens.view('center') === 'kick' ? 'stream' : '');
@@ -52,29 +59,66 @@ camera.zoom = 1.25; // open close on the desk; zoom out to see the whole room
 
 const controls = new OrbitControls(camera, canvas);
 controls.target.copy(TARGET);
-controls.enablePan = false;
-controls.enableDamping = !reduceMotion;
-controls.dampingFactor = 0.08;
-controls.rotateSpeed = 0.6;
-controls.minAzimuthAngle = 0.08;
-controls.maxAzimuthAngle = 1.45;
-controls.minPolarAngle = 0.62;
-controls.maxPolarAngle = 1.22;
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.rotateSpeed = 0.55;
+controls.minAzimuthAngle = 0.02;
+controls.maxAzimuthAngle = 1.55;
+controls.minPolarAngle = 0.55;
+controls.maxPolarAngle = 1.28;
 controls.minZoom = 0.85;
-controls.maxZoom = 3.2;
-// The plain wheel scrolls the page (the parts list is below); Ctrl/⌘ + wheel
-// and trackpad pinch (which arrives as ctrl+wheel) zoom the scene.
+controls.maxZoom = 3.6;
+// Move around the room: right-drag (or shift+drag) pans; the point you orbit
+// around stays inside the room so you never lose the desk.
+controls.enablePan = true;
+controls.screenSpacePanning = true;
+controls.panSpeed = 0.9;
+controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
+const ROOM_MIN = new THREE.Vector3(0.15, 0.3, 0.15), ROOM_MAX = new THREE.Vector3(1.95, 1.7, 1.95);
+function keepInRoom() {
+  const before = controls.target.clone();
+  controls.target.clamp(ROOM_MIN, ROOM_MAX);
+  camera.position.add(controls.target.clone().sub(before));
+}
+// The plain wheel scrolls the page (the parts list is below); Ctrl/⌘ + wheel,
+// trackpad pinch (arrives as ctrl+wheel) and the +/− buttons zoom — smoothly,
+// toward the point under the pointer.
 controls.enableZoom = false;
 // ...but phones still pinch to zoom: OrbitControls' own zoom only for touch.
 canvas.addEventListener('pointerdown', e => { controls.enableZoom = e.pointerType === 'touch'; });
-canvas.addEventListener('wheel', e => {
-  if (seat.on || !(e.ctrlKey || e.metaKey)) return;
-  e.preventDefault();
+let zoomGoal = null, zoomAt = new THREE.Vector2(); // target zoom and the NDC point it centres on
+function zoomBy(f, ndcX = 0, ndcY = 0) {
   tween = null;
-  camera.zoom = THREE.MathUtils.clamp(camera.zoom * Math.exp(-e.deltaY * 0.004), controls.minZoom, controls.maxZoom);
-  camera.updateProjectionMatrix();
-  dirty = true;
+  zoomGoal = THREE.MathUtils.clamp((zoomGoal ?? camera.zoom) * f, controls.minZoom, controls.maxZoom);
+  zoomAt.set(ndcX, ndcY);
+}
+let wheelHintAt = 0;
+canvas.addEventListener('wheel', e => {
+  if (seat.on) return;
+  if (!(e.ctrlKey || e.metaKey)) {
+    // first plain-wheel over the scene: say how to zoom (once in a while)
+    if (performance.now() - wheelHintAt > 15000 && scrollY < 40) { wheelHintAt = performance.now(); ui.say('🔍 للتقريب: Ctrl + العجلة، أو أزرار + و − تحت'); }
+    return;
+  }
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  zoomBy(Math.exp(-e.deltaY * 0.004), ((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
 }, { passive: false });
+function stepZoom() {
+  if (zoomGoal === null) return false;
+  // keep the world point under zoomAt fixed while zoom eases toward the goal
+  const before = new THREE.Vector3(zoomAt.x, zoomAt.y, 0).unproject(camera);
+  camera.zoom += (zoomGoal - camera.zoom) * 0.16;
+  camera.updateProjectionMatrix();
+  const after = new THREE.Vector3(zoomAt.x, zoomAt.y, 0).unproject(camera);
+  const shift = before.sub(after);
+  controls.target.add(shift); camera.position.add(shift);
+  keepInRoom();
+  if (Math.abs(zoomGoal - camera.zoom) < 0.002) zoomGoal = null;
+  return true;
+}
+document.getElementById('zoom-in').addEventListener('click', () => zoomBy(1.3));
+document.getElementById('zoom-out').addEventListener('click', () => zoomBy(1 / 1.3));
 // Phones: one finger scrolls the page (to the parts list below), two fingers
 // turn and zoom the scene. -1 = no action for a single finger.
 controls.touches = { ONE: -1, TWO: THREE.TOUCH.DOLLY_ROTATE };
@@ -107,6 +151,7 @@ const ANCHOR_OVERRIDE = {
   'pad-l': [1.17, 0.76, 0.47],
   'cam-stand': [0.86, 1.36, 0.07],
   chair: [1.32, 1.12, 1.32],
+  mouse: [1.07, 0.8, 0.4],
   case: [0.42, 0.46, 1.08],
 };
 const anchors = {};
@@ -156,8 +201,8 @@ let dirty = true;
 let visible = true;
 let lastScreen = 0;
 let onFrame = () => {};
-controls.addEventListener('change', () => { dirty = true; });
-controls.addEventListener('start', () => { tween = null; });
+controls.addEventListener('change', () => { if (!tween) keepInRoom(); dirty = true; });
+controls.addEventListener('start', () => { tween = null; zoomGoal = null; });
 new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(canvas);
 
 // Cinematic camera move used when a card focuses an item: slow ease-in-out,
@@ -168,11 +213,11 @@ function tweenTo(target, zoom, ms = 1600) {
   sph.setFromVector3(camera.position.clone().sub(controls.target));
   const dist = controls.target.distanceTo(target);
   tween = {
-    t0: performance.now(), ms: reduceMotion ? 1 : ms,
+    t0: performance.now(), ms: reduceMotion ? 700 : ms,
     fromT: controls.target.clone(), toT: target, fromZ: camera.zoom, toZ: zoom,
     r: sph.radius, phi: sph.phi, theta: sph.theta,
-    arc: Math.min(0.12, dist * 0.18),     // farther jumps swing a little more
-    dip: Math.min(0.12, dist * 0.15),     // and breathe out a little more
+    arc: reduceMotion ? 0 : Math.min(0.12, dist * 0.18),   // farther jumps swing a little more
+    dip: reduceMotion ? 0 : Math.min(0.12, dist * 0.15),   // and breathe out a little more
   };
 }
 const easeInOut = k => (k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2);
@@ -196,7 +241,7 @@ function loop(t) {
   if (!visible) return;
   stepTween(t);
   if (!seat.on) controls.update();
-  if (seat.update(t) | interact.tick(t) | stepTilt() | stepDrop(t)) dirty = true;
+  if (seat.update(t) | interact.tick(t) | stepTilt() | stepDrop(t) | stepZoom() | life.tick(t)) dirty = true;
   // Screens refresh ~10x a second; that is also the idle frame rate.
   if (t - lastScreen > 100) {
     lastScreen = t;
@@ -218,13 +263,14 @@ const modeButtons = document.querySelectorAll('[data-mode]');
 function setMode(name) {
   mode = name;
   applyMode(world, name);
+  streamerOn();
   syncLive();
   document.documentElement.dataset.mode = name;
   modeButtons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === name)));
   dirty = true;
   ui?.onModeChange();
 }
-modeButtons.forEach(b => b.addEventListener('click', () => { setMode(b.dataset.mode); play('on'); }));
+modeButtons.forEach(b => b.addEventListener('click', () => { setMode(b.dataset.mode); play('on'); track('mode', { via: b.dataset.mode }); }));
 
 /* ---------- entrance: the pieces drop onto the desk one after another ---------- */
 let drop = null;
@@ -280,12 +326,24 @@ function highlight(id, on) {
   dirty = true;
 }
 
+// Things you can hover that aren't products (the water bottle, the cats...).
+const DECOR_TEXT = {
+  water: 'مو معقولة! بتشوف مويتي كمان؟ 😂',
+  bonbon: 'بون بون 🧡',
+  abufarwa: 'أبو فروة 🖤',
+  streamer: 'قاعد يلعب الحين، لا تزعجه 🎮',
+};
+world.decor.water.traverse(o => { if (o.isMesh) pickables.push(o); });
+pickables.push(...life.pickables());
+let decorAt = null; // decor key under the pointer, if any
+
 function pick(e) {
   const r = canvas.getBoundingClientRect();
   ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ptr, activeCamera());
   const hit = ray.intersectObjects(pickables, false)[0];
-  return hit ? hit.object.userData.id : null;
+  decorAt = hit?.object.userData.decor || null;
+  return hit && !decorAt ? hit.object.userData.id : null;
 }
 
 let hovered = null;
@@ -301,8 +359,9 @@ canvas.addEventListener('pointermove', e => {
     if (id) highlight(id, true);
   }
   canvas.style.cursor = id ? 'pointer' : 'grab';
-  if (id && SCENE_BY_ID[id]) {
-    label.textContent = `${SCENE_BY_ID[id].num} · ${nameOf(id)}`;
+  const text = decorAt ? DECOR_TEXT[decorAt] : id && SCENE_BY_ID[id] && `${SCENE_BY_ID[id].num} · ${nameOf(id)}`;
+  if (text) {
+    label.textContent = text;
     label.style.transform = `translate(${e.clientX}px, ${e.clientY - 18}px) translate(-50%, -100%)`;
     label.hidden = false;
   } else label.hidden = true;
@@ -324,6 +383,10 @@ canvas.addEventListener('pointerup', e => {
   if (moved > 6 || !quick) return;
   const id = pick(e);
   if (id) { interact.react(id); ui.open(id); }
+  else if (decorAt) {
+    ui.say(DECOR_TEXT[decorAt]); // phones have no hover, so a tap says it
+    if (decorAt === 'bonbon' || decorAt === 'abufarwa') { life.poke(decorAt); play('meow'); track('cat', { item: decorAt }); }
+  }
 });
 
 /* ---------- hotspots ---------- */
@@ -492,6 +555,7 @@ function snapshot(ids, focus, fit = 1, w = 480, h = 360) {
 const fade = document.getElementById('fade');
 let switching = false;
 function switchView(sit) {
+  if (sit) track('sit');
   if (switching || seat.on === sit) return;
   switching = true;
   fade.classList.add('on');
@@ -500,6 +564,7 @@ function switchView(sit) {
     controls.enabled = !sit;
     canvas.style.touchAction = sit ? 'none' : 'pan-y'; // in the chair one finger looks around
     document.body.classList.toggle('seated', sit);
+    streamerOn();
     label.hidden = true;
     dirty = true;
     fade.classList.remove('on');
