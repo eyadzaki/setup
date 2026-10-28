@@ -43,6 +43,8 @@ function clear(a, b) {
   return true;
 }
 const EDGES = FLOOR.map((a, i) => FLOOR.map((b, j) => j).filter(j => j !== i && clear(a, FLOOR[j])));
+const OPEN = FLOOR.map((_, i) => i).filter(i => EDGES[i].length);   // spots with a way out (one hugs the chair)
+const any = list => list[Math.floor(Math.random() * list.length)];
 function route(from, to) {
   const prev = new Map([[from, -1]]), q = [from];
   while (q.length) {
@@ -105,36 +107,42 @@ function buildCat(kind) {
   return { g, body, head, legs, tail, shadow, name };
 }
 
-function createCat(kind, start, seed, othersBusy) {
+function createCat(kind, start, other) {
   const c = buildCat(kind);
   c.g.position.set(FLOOR[start][0], 0, FLOOR[start][1]);
-  let rand = seed;
-  const rnd = () => ((rand = (rand * 16807) % 2147483647) / 2147483647);
-  const st = { node: start, perch: null, act: 'sit', until: 4 + rnd() * 6, path: [], speed: 0, jump: null, heading: rnd() * 6, phase: 0, pose: 0, poseGoal: 0.6, lieGoal: 0, lie: 0 };
+  const rnd = Math.random, seed = rnd() * 100;                // a different day in the room on every visit
+  const st = { node: start, perch: null, act: 'sit', until: 0.5 + rnd() * 2, moved: -1e9, path: [], speed: 0, jump: null, heading: rnd() * 6, phase: 0, pose: 0, poseGoal: 0.6, lieGoal: 0, lie: 0 };
 
   function plan(now) {
-    const wait = () => { st.until = now + 4 + rnd() * 6; };   // the other cat is on the move: stay put a bit longer
+    // One cat moves at a time, and whoever has been waiting goes next.
+    const blocked = () => other()?.busy() || (other()?.waiting() && !st.wants);
+    const away = () => OPEN.filter(n => n !== other()?.node());   // never where the other cat is (or is heading)
+    const wait = () => { st.wants = !other()?.waiting() || st.wants; st.until = now + 2 + rnd() * 3; };
     if (st.perch) {                                    // up high: nap, then hop down
-      if (st.act !== 'rest') { st.act = 'rest'; st.until = now + 30 + rnd() * 30; st.poseGoal = rnd() < 0.5 ? 1 : 0.6; st.lieGoal = st.poseGoal === 1 ? 1 : 0; return; }
-      if (othersBusy()) return wait();
+      if (st.act !== 'rest') { st.act = 'rest'; st.until = now + 12 + rnd() * 13; st.poseGoal = rnd() < 0.5 ? 1 : 0.6; st.lieGoal = st.poseGoal === 1 ? 1 : 0; return; }
+      if (blocked()) return wait();
       const p = PERCH[st.perch];
+      if (other()?.node() === p.from) { st.wants = false; st.until = now + 3; return; }   // someone sits where we would land: let them go first
       st.jump = { from: c.g.position.clone(), to: V(FLOOR[p.from][0], 0, FLOOR[p.from][1]), t0: now, dur: 0.55 };
-      st.node = p.from; st.perch = null; st.act = 'jump'; st.lieGoal = 0; st.poseGoal = 0;
+      st.moved = now; st.wants = false;
+      st.node = p.from; st.perch = null; st.target = null; st.act = 'jump'; st.lieGoal = 0; st.poseGoal = 0;
       return;
     }
-    const r = rnd(), still = r >= 0.45;
-    if (!still && othersBusy()) return wait();
+    // after ~40 s of sitting about, the next pick is always a move
+    const r = now - st.moved > 40 ? rnd() * 0.45 : rnd(), still = r >= 0.45;
+    if (!still && blocked()) return wait();
+    if (!still) { st.moved = now; st.wants = false; }
     st.lieGoal = 0;
-    if (r < 0.25) { go(Math.floor(rnd() * FLOOR.length), 0.16); }               // stroll
-    else if (r < 0.29) { go(Math.floor(rnd() * FLOOR.length), 0.8); }           // zoomies, now and then
-    else if (r < 0.45) { const k = ['case', 'deskL', 'deskR'][Math.floor(rnd() * 3)]; go(PERCH[k].from, 0.18, k); }
-    else if (r < 0.7) { st.act = 'sit'; st.poseGoal = 0.6; st.until = now + 15 + rnd() * 15; }
-    else { st.act = 'lie'; st.poseGoal = 1; st.lieGoal = 1; st.until = now + 40 + rnd() * 50; }
+    if (r < 0.25) { go(any(away()), 0.16, null, now); }         // stroll
+    else if (r < 0.29) { go(any(away()), 0.8, null, now); }     // zoomies, now and then
+    else if (r < 0.45) { const k = any(Object.keys(PERCH).filter(p => p !== other()?.spot())); go(PERCH[k].from, 0.18, k, now); }  // never the other cat's spot
+    else if (r < 0.7) { st.act = 'sit'; st.poseGoal = 0.6; st.until = now + 6 + rnd() * 6; }
+    else { st.act = 'lie'; st.poseGoal = 1; st.lieGoal = 1; st.until = now + 15 + rnd() * 15; }
   }
-  function go(to, speed, perch) {
+  function go(to, speed, perch, now) {
     st.path = to === st.node ? [] : route(st.node, to);
     st.speed = speed; st.act = 'walk'; st.poseGoal = 0; st.target = perch || null;
-    if (!st.path.length) { st.act = 'sit'; st.until = 0; if (perch) startPerch(perch, performance.now() / 1000); }
+    if (!st.path.length) { st.act = 'sit'; st.until = 0; if (perch) startPerch(perch, now); }
   }
   function startPerch(k, now) {
     const p = PERCH[k];
@@ -146,6 +154,9 @@ function createCat(kind, start, seed, othersBusy) {
     group: c.g,
     name: c.name,
     busy: () => st.act === 'walk' || st.act === 'jump',
+    waiting: () => st.wants,
+    spot: () => st.perch || st.target,
+    node: () => (st.perch || st.jump ? null : st.path.length ? st.path[st.path.length - 1] : st.node),   // floor spot only
     poke(now) { if (st.jump) return; st.act = st.perch ? 'perched' : 'sit'; st.poseGoal = 0.6; st.lieGoal = 0; st.path = []; st.until = now + 8; },
     tick(now, dt) {
       if (st.jump) {
@@ -158,7 +169,7 @@ function createCat(kind, start, seed, othersBusy) {
         if (k >= 1) {
           c.body.rotation.x = 0; st.jump = null;
           if (j.perch) { st.perch = j.perch; st.act = 'perched'; st.until = now; st.heading = PERCH[j.perch].look; }
-          else { st.act = 'sit'; st.until = now + 8 + rnd() * 7; st.poseGoal = 0.6; }
+          else { st.act = 'sit'; st.until = now + 3 + rnd() * 3; st.poseGoal = 0.6; }
         }
       } else if (st.act === 'walk') {
         const n = st.path[0], tx = FLOOR[n][0], tz = FLOOR[n][1];
@@ -171,7 +182,7 @@ function createCat(kind, start, seed, othersBusy) {
           c.g.position.x = tx; c.g.position.z = tz; st.node = n; st.path.shift();
           if (!st.path.length) {
             if (st.target) startPerch(st.target, now);
-            else { st.act = 'sit'; st.poseGoal = 0.6; st.until = now + 8 + rnd() * 7; }
+            else { st.act = 'sit'; st.poseGoal = 0.6; st.until = now + 3 + rnd() * 3; }
           }
         } else { c.g.position.x += dx / d * step; c.g.position.z += dz / d * step; }
         st.phase += dt * (st.speed > 0.5 ? 16 : 7);
@@ -208,8 +219,9 @@ function createCat(kind, start, seed, othersBusy) {
 
 export function createLife({ world }) {
   const cats = [];
-  for (const [kind, start, seed] of [['orange', 2, 7], ['black', 9, 13]]) {
-    const cat = createCat(kind, start, seed, () => cats.some(o => o !== cat && o.busy()));  // one moves at a time
+  const a = any(OPEN), b = any(OPEN.filter(n => n !== a));
+  for (const [kind, start] of [['orange', a], ['black', b]]) {           // somewhere new each visit
+    const cat = createCat(kind, start, () => cats.find(o => o !== cat));
     cats.push(cat);
     world.root.add(cat.group);
   }
