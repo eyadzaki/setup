@@ -12,8 +12,14 @@ const PER_CHANNEL = 8;
 
 const decode = s => s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 
+// YouTube's feed now and then answers 404/500 for a minute; try a few times.
 async function latest(id) {
-  const res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${id}`);
+  let res;
+  for (let i = 0; i < 4; i++) {
+    res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${id}`);
+    if (res.ok) break;
+    await new Promise(r => setTimeout(r, 15000));
+  }
   if (!res.ok) throw new Error(`feed ${id}: ${res.status}`);
   const xml = await res.text();
   return [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].slice(0, PER_CHANNEL).map(([, e]) => ({
@@ -32,8 +38,13 @@ async function subscribers(handle) {
 }
 
 const out = { updated: new Date().toISOString(), channels: {} };
-for (const [key, c] of Object.entries(CHANNELS)) {
-  out.channels[key] = { name: c.name, handle: c.handle, subs: await subscribers(c.handle), videos: await latest(c.id) };
+try {
+  for (const [key, c] of Object.entries(CHANNELS)) {
+    out.channels[key] = { name: c.name, handle: c.handle, subs: await subscribers(c.handle), videos: await latest(c.id) };
+  }
+} catch (e) {
+  console.log(`${e.message}; keeping the current videos.json`);
+  process.exit(0);
 }
 await mkdir('data', { recursive: true });
 await writeFile('data/videos.json', JSON.stringify(out, null, 2) + '\n');

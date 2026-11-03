@@ -18,11 +18,13 @@ jobs:
           node-version: 20
       - run: node scripts/update-videos.mjs
       - name: Latest Kick gameplay frame
+        if: always()   # runs even if the YouTube step had trouble
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
           node scripts/update-stream.mjs
         continue-on-error: true   # Kick may block datacenter IPs; the site keeps the last frame
       - name: Commit if changed
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898333+github-actions[bot]@users.noreply.github.com"
