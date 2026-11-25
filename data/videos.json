@@ -1,11 +1,16 @@
 {
-  "updated": "2026-11-24T16:56:25.586Z",
+  "updated": "2026-11-25T01:53:37.070Z",
   "channels": {
     "ez": {
       "name": "Eyad Zaki",
       "handle": "@Eyadzaki",
       "subs": "114K",
       "videos": [
+        {
+          "id": "QG7eiILl4yk",
+          "title": "مسكين انسجن 😂",
+          "published": "2026-11-24T19:00:22+00:00"
+        },
         {
           "id": "kjY4CqPIb4A",
           "title": "لقيت زومبي في قراند 6 🔥",
@@ -40,11 +45,6 @@
           "id": "IlcBcwWKxHo",
           "title": "30 فريم جداً جداً عادية",
           "published": "2026-11-21T15:00:31+00:00"
-        },
-        {
-          "id": "mI3l8J2yx14",
-          "title": "كمية العشوائية تخليك مجنون😂",
-          "published": "2026-11-20T19:00:09+00:00"
         }
       ]
     },
