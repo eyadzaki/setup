@@ -1,11 +1,16 @@
 {
-  "updated": "2026-11-26T16:21:43.064Z",
+  "updated": "2026-11-27T01:28:11.332Z",
   "channels": {
     "ez": {
       "name": "Eyad Zaki",
       "handle": "@Eyadzaki",
       "subs": "114K",
       "videos": [
+        {
+          "id": "C9A8iMqbHGI",
+          "title": "هذا البوت محنك خطير 😂",
+          "published": "2026-11-26T19:00:30+00:00"
+        },
         {
           "id": "WIGWclW-D0g",
           "title": "البوتات يبغالهم تربية 😂",
@@ -40,11 +45,6 @@
           "id": "3RjlzAwyvFY",
           "title": "راح أسوي مشاكل كثير في اللعبة شكلي 😂",
           "published": "2026-11-23T15:00:30+00:00"
-        },
-        {
-          "id": "7XQBaA8YsRk",
-          "title": "البوتات ينرفزوك😂😂",
-          "published": "2026-11-22T19:00:19+00:00"
         }
       ]
     },
